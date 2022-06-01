@@ -1,0 +1,163 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML">
+  <title>Optimizing Logistic Regression for a Particle Physics Application</title>
+<metadata xmlns:md="http://cnx.rice.edu/mdml">
+  <md:content-id>m42088</md:content-id>
+  <md:title>Optimizing Logistic Regression for a Particle Physics Application</md:title>
+  <md:abstract>This is an application module describing using Logistic Regression to solve a detection problem in Particle Physics: Detecting the top quark.</md:abstract>
+  <md:uuid>1687de77-32bb-45b7-a04d-5eb9dfc4b06b</md:uuid>
+</metadata>
+
+<content>
+    <section id="id240335">
+      <title>Motivation</title>
+      <para id="id240341">High-energy particle physics experiments today usually involves colliding beams of particles accelerated to tremendous energies and then studying the “shrapnel" that is created. The goal of such experiments often involves the discovery of new particles that are created when two common particles from the beams collide. Unfortunately, these new particles are so short-lived that they cannot be observed directly. Instead, the existence of such particles is inferred from patterns in the “shrapnel" that is formed when they decay into other particles. It is the properties of these secondary particles that are measured in detectors such as those at the Large Hadron Collider (LHC).</para>
+      <para id="id240352">To discover a new particle, physicists use computer programs that have been programmed with theoretical models to simulate large numbers of random particle collisions. The models are tuned so as to generate two sets of collision “events": one set is compatible with the particle existing in nature and the other is compatible with the null hypothesis. The characteristics of the sets of simulated events are then compared with real events from a live experimental detector.</para>
+      <para id="id240363">Because of the complicated nature of the events and the large amount of data involved, machine learning has been investigated to help with the classification problem of determining what kind of particles are initially produced for each event. If we can train classifiers on simulated data to be effective at distinguishing events that are associated with interesting particles from uninteresting background events, we will likely be able to use such classifiers to confirm or deny the discovery of these particles in real data. The existence of more effective classifiers decrease the amount of real data that must be collected to obtain a statistically significant result. Given the large expense of operating particle colliders and the power of modern computers, acquiring more effective classifiers is an important problem for particle physicists.</para>
+    </section>
+    <section id="id240374">
+      <title>Project Goal</title>
+      <para id="id240719">The project goal is to construct a classifier that is efficient at verifying the existence of a top quark in a set of simulated collision events. Top quarks are good particles for investigating classifiers because they are very rare and very hard to detect but have already been proven to exist. Efficiency is defined by the beam luminosity needed to detect the existence of top quarks with <m:math overflow="scroll"><m:mrow><m:mn>5</m:mn><m:mi>σ</m:mi></m:mrow></m:math> of statistical significance, the “industry standard" for particle physics. Beam luminosity is directly proportional to the number of collisions, and thus the operating time of the experiment, and thus the cost, so lower required luminosity is better.</para>
+      <para id="id240741">Top quarks can be created by a number of different pathways, and each pathway creates a different pattern of decay products measured by the detectors, real or simulated. This project focuses on only one particular pathway which results in the creation of a top quark and its anti-particle in what are known as “t-tbar" events.</para>
+      <para id="id240750">Events which contain the desired t-tbar events are inevitably accompanied by a much larger number of undesired background events. The vast majority of these events initially involve the creation of much lighter quarks – these are called “QCD" events, named after the theory that describes the behavior of these particles, quantum chromodynamics. QCD events are several million times more common than t-tbar events at the energies presently used at the LHC. A minority of background events involve the creation of W bosons. Although these W events are rarer, occurring at the rate of “only" a few hundred per t-tbar event, their detectable features are very similar to those of t-tbar events and are thus they are harder to distinguish from the desired t-tbar signal.</para>
+    </section>
+    <section id="id240763">
+      <title>Prior Work - PHYS 491 Summer 2011</title>
+      <para id="id240770">The author initially got started investigating this classification problem as part of an independent study course taken with Dr. Paul Padley. Dr. Padley works at Bonner Lab at Rice University and is manager of the Endcap Muon Subdetector, a large component of the Compact Muon Solenoid (CMS) experiment at the LHC. The course involved learning background about particle physics necessary to be able to understand the classification problem.</para>
+      <para id="id240777">The strategy over the summer was to figure out how to use a popular event generating program called Pythia in conjunction with a popular machine learning toolkit called WEKA. The author wrote a small program in C to interface with Pythia to generate a large number of t-tbar, W, and QCD events. The C program ran the events through a simple filter, a “trigger" in physics parlance, to quickly eliminate a large number of events that had a relatively low probability of being t-tbar events. (The trigger filters out 95% of t-tbar events, but 99.9% of the QCD background events.) Sufficient data was collected to form a training data set and a test data set; each set had 10,000 of each type of event.</para>
+      <section id="id240791">
+        <title>Features</title>
+        <para id="id240797">When Pythia generates an event, it makes available a wide array of information useful for generating features. The chosen features for use in this project included how many of each type of lepton (electrons, muons, and tau particles) were created in each event, how many “jets" corresponding to quarks were generated, and the minimum angle between any pair of quark jets. In addition, missing transverse momentum, indicative of an invisible neutrino, was measured. Finally, the total transverse energy (energy perpendicular to the beam axis) of all of the quark jets was measured. A large transverse energy is strongly associated with “head-on" collisions capable of releasing enough energy to make top quarks. “It turns out" that transverse energy is the most important single feature for identifying top quarks.</para>
+      </section>
+      <section id="id240811">
+        <title>Classifiers</title>
+        <para id="id240817">Because of the author's lack of experience with machine learning, a script was developed that ran each of the classifiers in WEKA against the training data and extracted the relevant statistics. Each of the classifiers was run with default parameters. For each classifier, the number of t-tbar events that were correctly identified (true positives) was determined, as well as the number of QCD and W events that were misclassified as t-tbar events (false positives.) From the ratio of these numbers and the cross-sections of the relevant pathways, it was possible to determine the total beam luminosity needed to confirm the existence of top quarks in a set of events using each classifier.</para>
+        <para id="id240826">Most of the wide variety of classifiers performed within an order of magnitude of each other, except for one called “Hyperpipes" which performed two orders of magnitude better than any of the others. This struck Dr. Padley as very strange as he had never heard of the Hyperpipes algorithm before.</para>
+      </section>
+    </section>
+    <section id="id240836">
+      <title>Current Work - ELEC 631 Fall 2011</title>
+      <para id="id240842">One interesting aspect of the behavior of the Hyperpipes algorithm on the dataset was the very low true positive rate: less than 10% of the t-tbar events were correctly classified as such. However, the false positive rate was much, much lower – this is what accounted for its good performance. At this point the author became suspicious that the default parameters for the WEKA machine learning algorithms were poorly suited to this application and that some of the other algorithms could also demonstrate greatly improved performance with a little tuning. Since logistic regression is relatively simple, and since the author now understands a little about how the algorithm works from the on-line Stanford course, the decision was made to try and tune it to this application.</para>
+      <section id="id240854">
+        <title>Cost Matrix</title>
+        <para id="id240860">The first stage of tuning involved adjusting the cost matrix. This followed from the observation that when training a classifier, we really want to penalize false positives much more harshly than false negatives. Sacrificing up to 50% of our true positives is acceptable if it leads to a very large decrease in background false positive events and thus an improved signal-to-noise ratio. Keeping the true positive rate relatively high is still important as t-tbar events are rare enough that keeping enough for statistical significance is still a problem, as we shall see a bit later.</para>
+        <para id="id240869">A variety of cost matrices were created and the logistic regression classifier in WEKA was trained on a training data set with each one of them.
+The resulting classification models were then tested on a cross-validation data set. Both the training data set and the cross-validation set had 10,000 of each type of event as before. The results are summarized in Table TODO. Note that as expected, increasing the cost of false positives relative to other kinds of errors greatly improved the signal to noise ratio with an acceptable decrease in the true positive rate. Note that the cost matrices are properly scaled by WEKA: only the relative costs of the different types of errors represented by the cost matrix matter. Interestingly, eliminating the costs associated with misclassifying W background events as QCD background events and vice-versa seems to have no effect on the signal-to-noise ratio.</para>
+        <para id="id240880">Choosing a cost matrix which penalizes each type of false positive 300 times more than other types of errors seemed to give good results without leading to diminishing returns in the form of decreased true positives. Penalizing false positives caused by QCD events more than W events didn't improve the results on the large test set.</para>
+      </section>
+      <section id="id240887">
+        <title>Ratio of Signal to Background in Training Set</title>
+        <para id="id240893">Dr. Devika Subramanian of the Rice Computer Science department suggested that classifiers need to be trained on data that has each type of event to be classified in a ratio that is roughly the same as that in the real test data. This suggestion indicated that the previous strategy of training classifiers with an equal ratio of each type of event was unsound. Unfortunately, generating training and test sets with the correct ratio of event types is quite difficult because of the huge backgrounds that must be generated, in this case several million QCD events for every t-tbar event. Generating enough background for 100 t-tbar events would take a modern cpu core over 1000 days to compute enough background.</para>
+        <para id="id240902">The solution was to use the DaVinci cluster at Rice to generate the backgrounds by running up to 200 Pythia simulation runs at once. This process generated enough background for 12 t-tbar events and this served as our test set. Unfortunately signal-to-noise ratio in the test set was so low that the logistic regression algorithm in WEKA could not be trained against it – the resulting model failed to detect any t-tbar events at all. Also, training logistic regression on the full test set strained the memory capabilities of the Java virtual machine it was run on, leading to frequent crashes.</para>
+        <para id="id240916">To get around this, the author decided to compromise and experiment with training the logistic regression classifier on much smaller training sets with differing ratios of t-tbar events to background events. The performance of the resulting models were then tested on the cross-validation set containing 10,000 of each type of event. The model generated from a training set with a ratio of tt-bar to background events of about 50 seemed to perform the best. (See Table TODO).</para>
+      </section>
+      <section id="id240924">
+        <title>Results</title>
+        <para id="id240930">As a result of performing the above optimizations, the efficiency of the logistic regression model at analyzing the very large test set improved by over a factor of 30 while only halving the true positive rate, as shown in Table TODO. It is important to note that the false positive ratio is still much too high for top quarks to be discoverable with a data set of this size. Since we are dealing with counting statistics of independent events, the uncertainty in the background count is approximately the square root of the background count, corresponding to a standard deviation of about 13. Since our signal is only 6 t-tbar events, this means we have a signal significance of about <m:math overflow="scroll"><m:mrow><m:mn>0</m:mn><m:mo>.</m:mo><m:mn>4</m:mn><m:mi>σ</m:mi></m:mrow></m:math>. In order to get a statistically significant result, we would need to collect around 150 times as much raw data.</para>
+      </section>
+    </section>
+    <section id="id240956">
+      <title>Conclusion</title>
+      <para id="id240962">We have demonstrated that we can optimize our use of linear regression to exploit characteristics of a particular particle physics data set. Existing tools like WEKA make using machine learning for this task relatively straightforward, with no need to reinvent the wheel.</para>
+      <para id="id240968">It should be noted that this project has neglected the most difficult and computationally intensive part of identifying new physics with particle detectors: modeling the performance of the particle detectors themselves. Modern particle detectors are incredibly complicated pieces of machinery and modeling their capabilities (which change often as components are upgraded) requires a measurable fraction of the planet's computing resources. (ref Grid Computing)</para>
+      <section id="id240975">
+        <title>Future Work</title>
+        <para id="id240982">Dr. Subramanian also suggested that classifier performance could be improved by combining several integer features, namely how many of each type of lepton were found in each event, into one category feature, namely which lepton type was found. This makes sense because the high-level trigger eliminates all events that do not have exactly one lepton. A simple script should be able to transform all of the existing data to make this possible.</para>
+      </section>
+    </section>
+    <section id="id240990">
+      <title>References</title>
+      <para id="id240996">WEKA
+Pythia
+Particle physics book</para>
+      <para id="id240999">
+        <m:math overflow="scroll">
+          <m:mrow>
+            <m:mi>h</m:mi>
+            <m:mi>t</m:mi>
+            <m:mi>t</m:mi>
+            <m:mi>p</m:mi>
+            <m:mo>:</m:mo>
+            <m:mo>/</m:mo>
+            <m:mo>/</m:mo>
+            <m:mi>w</m:mi>
+            <m:mi>w</m:mi>
+            <m:mi>w</m:mi>
+            <m:mo>.</m:mo>
+            <m:mi>r</m:mi>
+            <m:mi>e</m:mi>
+            <m:mi>a</m:mi>
+            <m:mi>d</m:mi>
+            <m:mi>w</m:mi>
+            <m:mi>r</m:mi>
+            <m:mi>i</m:mi>
+            <m:mi>t</m:mi>
+            <m:mi>e</m:mi>
+            <m:mi>w</m:mi>
+            <m:mi>e</m:mi>
+            <m:mi>b</m:mi>
+            <m:mo>.</m:mo>
+            <m:mi>c</m:mi>
+            <m:mi>o</m:mi>
+            <m:mi>m</m:mi>
+            <m:mo>/</m:mo>
+            <m:mi>a</m:mi>
+            <m:mi>r</m:mi>
+            <m:mi>c</m:mi>
+            <m:mi>h</m:mi>
+            <m:mi>i</m:mi>
+            <m:mi>v</m:mi>
+            <m:mi>e</m:mi>
+            <m:mi>s</m:mi>
+            <m:mo>/</m:mo>
+            <m:mi>c</m:mi>
+            <m:mi>e</m:mi>
+            <m:mi>r</m:mi>
+            <m:msub>
+              <m:mi>n</m:mi>
+              <m:mi>o</m:mi>
+            </m:msub>
+            <m:mi>f</m:mi>
+            <m:mi>f</m:mi>
+            <m:mi>i</m:mi>
+            <m:mi>c</m:mi>
+            <m:mi>i</m:mi>
+            <m:mi>a</m:mi>
+            <m:mi>l</m:mi>
+            <m:mi>l</m:mi>
+            <m:msub>
+              <m:mi>y</m:mi>
+              <m:mi>u</m:mi>
+            </m:msub>
+            <m:mi>n</m:mi>
+            <m:mi>v</m:mi>
+            <m:mi>e</m:mi>
+            <m:mi>i</m:mi>
+            <m:mi>l</m:mi>
+            <m:msub>
+              <m:mi>s</m:mi>
+              <m:mi>i</m:mi>
+            </m:msub>
+            <m:mi>t</m:mi>
+            <m:msub>
+              <m:mi>s</m:mi>
+              <m:mi>g</m:mi>
+            </m:msub>
+            <m:mi>r</m:mi>
+            <m:mo>.</m:mo>
+            <m:mi>p</m:mi>
+            <m:mi>h</m:mi>
+            <m:mi>p</m:mi>
+          </m:mrow>
+        </m:math>
+      </para>
+    </section>
+    <section id="id241343">
+      <title>Acknowledgments</title>
+      <para id="id241349">The author would like to thank Dr. Paul Padley and Dr. Devika Subramanian for providing advice and training for this project, as well as Dr. Andrew Ng for his excellent and fun on-line machine learning class.</para>
+    </section>
+    <section id="id241356">
+      <title>Directions for Using Code</title>
+      <para id="id241362">Install Pythia 8 and WEKA on your UNIX machine. The included scripts and Makefile assume that the WEKA classes are in /usr/share/java/weka.jar and that the directory containing the code and data files is located in the pythia directory. See the included README file for more details.</para>
+    </section>
+  </content>
+</document>

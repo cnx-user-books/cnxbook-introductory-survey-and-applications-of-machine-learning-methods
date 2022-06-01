@@ -1,0 +1,680 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML">
+  <title>Introduction to Logistic Regression</title>
+<metadata xmlns:md="http://cnx.rice.edu/mdml">
+  <md:content-id>m42090</md:content-id>
+  <md:title>Introduction to Logistic Regression</md:title>
+  <md:abstract>Gives introduction to a machine learning algorithm: Logistic Regression. First, we describe the theoretical background of regression analysis using simple linear regression and the Generalized Linear Model. Then, we describe the Logistic Regression algorithm itself, and its solution using gradient descent. Finally, we provide an intuitive demonstration of how it works in a classification application with figures (including the MATLAB code used to generate the figures), and links to learn about more real-world applications.</md:abstract>
+  <md:uuid>38ccdc78-7d86-4f72-a0ca-537392a693fa</md:uuid>
+</metadata>
+
+<content>
+    <section id="id62159">
+      <title>Introduction</title>
+      <para id="id62165">This is an introductory module on using Logistic Regression to solve large-scale classification tasks. In the first section, we will digress into the statistical background behind the generalized linear modeling for regression analysis, and then proceed to describe logistic regression, which has become something of a workhorse in industry and academia. This module assumes basic exposure to vector/matrix notation, enough to understand</para>
+      <equation id="id62186">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:mi>M</m:mi>
+            <m:mo>=</m:mo>
+            <m:mfenced separators="" open="[" close="]">
+              <m:mtable>
+                <m:mtr>
+                  <m:mtd>
+                    <m:mn>2</m:mn>
+                  </m:mtd>
+                  <m:mtd>
+                    <m:mn>2</m:mn>
+                  </m:mtd>
+                </m:mtr>
+                <m:mtr>
+                  <m:mtd>
+                    <m:mn>1</m:mn>
+                  </m:mtd>
+                  <m:mtd>
+                    <m:mn>0</m:mn>
+                  </m:mtd>
+                </m:mtr>
+              </m:mtable>
+            </m:mfenced>
+            <m:mo>,</m:mo>
+            <m:mi>x</m:mi>
+            <m:mo>=</m:mo>
+            <m:mfenced separators="" open="[" close="]">
+              <m:mtable>
+                <m:mtr>
+                  <m:mtd>
+                    <m:mn>3</m:mn>
+                  </m:mtd>
+                </m:mtr>
+                <m:mtr>
+                  <m:mtd>
+                    <m:mrow>
+                      <m:mo>-</m:mo>
+                      <m:mn>1</m:mn>
+                    </m:mrow>
+                  </m:mtd>
+                </m:mtr>
+              </m:mtable>
+            </m:mfenced>
+            <m:mo>,</m:mo>
+            <m:msub>
+              <m:mi>x</m:mi>
+              <m:mn>1</m:mn>
+            </m:msub>
+            <m:mo>=</m:mo>
+            <m:mo>?</m:mo>
+            <m:mo>,</m:mo>
+            <m:mi>M</m:mi>
+            <m:mo>*</m:mo>
+            <m:mi>x</m:mi>
+            <m:mo>=</m:mo>
+            <m:mo>?</m:mo>
+          </m:mrow>
+        </m:math>
+      </equation>
+    </section>
+    <section id="id62617">
+      <title>What is all this about?</title>
+      <para id="id62623">Regression Analysis is in essence the minimization of a cost function J that models the squared difference between the exact values y of a dataset, and one's estimate h of that dataset . Often, it is referred to as fitting a curve (the estimate) to a set of points based on some quantified measure of how well the curve fits the data. Formally, the most general form of the equation to model this process is:</para>
+      <equation id="uid1">
+        <m:math overflow="scroll" mode="display">
+          <m:mtable displaystyle="true">
+            <m:mtr>
+              <m:mtd/>
+              <m:mtd columnalign="left">
+                <m:mrow>
+                  <m:munder>
+                    <m:mtext>minimize</m:mtext>
+                    <m:mi>x</m:mi>
+                  </m:munder>
+                  <m:mi>J</m:mi>
+                  <m:mrow>
+                    <m:mo>(</m:mo>
+                    <m:mi>θ</m:mi>
+                    <m:mo>)</m:mo>
+                  </m:mrow>
+                </m:mrow>
+              </m:mtd>
+            </m:mtr>
+            <m:mtr>
+              <m:mtd/>
+              <m:mtd columnalign="left">
+                <m:mrow>
+                  <m:mtext>subject</m:mtext>
+                  <m:mspace width="4.pt"/>
+                  <m:mtext>to</m:mtext>
+                </m:mrow>
+              </m:mtd>
+              <m:mtd/>
+              <m:mtd columnalign="left">
+                <m:mrow>
+                  <m:msub>
+                    <m:mi>h</m:mi>
+                    <m:mi>θ</m:mi>
+                  </m:msub>
+                  <m:mrow>
+                    <m:mo>(</m:mo>
+                    <m:mi>x</m:mi>
+                    <m:mo>)</m:mo>
+                  </m:mrow>
+                </m:mrow>
+              </m:mtd>
+            </m:mtr>
+          </m:mtable>
+        </m:math>
+      </equation>
+      <para id="id62885">This minimization function models all regression analysis, but for the sake of understanding, this general form is not the most useful. How exactly do we model the estimate? How exactly do we minimize? To answer these questions and to be more specific, we shall begin by considering the simplest regression form, linear regression.</para>
+    </section>
+    <section id="id62892">
+      <title>Linear Regression</title>
+      <para id="id62899">In linear regression, we model the cost function's equation as:</para>
+      <equation id="id62902">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:mi>J</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>θ</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:mfrac>
+              <m:mn>1</m:mn>
+              <m:mrow>
+                <m:mn>2</m:mn>
+                <m:mi>m</m:mi>
+              </m:mrow>
+            </m:mfrac>
+            <m:munderover>
+              <m:mo>∑</m:mo>
+              <m:mrow>
+                <m:mi>i</m:mi>
+                <m:mo>=</m:mo>
+                <m:mn>1</m:mn>
+              </m:mrow>
+              <m:mi>m</m:mi>
+            </m:munderover>
+            <m:msup>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:msub>
+                  <m:mi>h</m:mi>
+                  <m:mi>θ</m:mi>
+                </m:msub>
+                <m:mrow>
+                  <m:mo>(</m:mo>
+                  <m:msup>
+                    <m:mi>x</m:mi>
+                    <m:mi>i</m:mi>
+                  </m:msup>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+                <m:mo>-</m:mo>
+                <m:msup>
+                  <m:mi>y</m:mi>
+                  <m:mi>i</m:mi>
+                </m:msup>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:mn>2</m:mn>
+            </m:msup>
+          </m:mrow>
+        </m:math>
+      </equation>
+      <para id="id62988">What does this mean? Essentially, <m:math overflow="scroll"><m:mrow><m:msub><m:mi>h</m:mi><m:mi>θ</m:mi></m:msub><m:mrow><m:mo>(</m:mo><m:mi>x</m:mi><m:mo>)</m:mo></m:mrow></m:mrow></m:math> is a vector that models one's hypothesis, the initial guess, of every point of the dataset. y is the exact value of every point in the dataset. Taking the squared difference between these two at every point creates a new vector that quantifies the error between one's guess and the actual value. We then seek to minimize the average value of this vector, because if this is minimized, then we have gotten our estimate to be as close as possible to the actual value for as many points as possible, given our choice of hypothesis.</para>
+      
+      <para id="id63026">As the above module demonstrates, linear regression is simply about fitting to a line, whether that line is straight or contains an arbitrary number of polynomial features. But that hasn't quite gotten us to where we wanted to get, which is classification, so we may need more tools.</para>
+    </section>
+    <section id="id63032">
+      <title>Generalized Linear Model</title>
+      <para id="id63039">As was stated in the beginning, there are many ways to describe the cost function. In the above description, we used the simplest linear model that can describe the hypothesis, but there are a range of values that can go into the hypothesis, and they can be grouped into families of functions. We can construct a Generalized Linear Model to model these extensions systematically. We can describe the value of the estimate and the actual points by incorporating them inside of an exponential function. In our example, we shall use the sigmoid function, which is the following:</para>
+      <equation id="id63047">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:mi>g</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>z</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:mfrac>
+              <m:mn>1</m:mn>
+              <m:mrow>
+                <m:mn>1</m:mn>
+                <m:mo>+</m:mo>
+                <m:msup>
+                  <m:mi>e</m:mi>
+                  <m:mrow>
+                    <m:mo>-</m:mo>
+                    <m:mi>z</m:mi>
+                  </m:mrow>
+                </m:msup>
+              </m:mrow>
+            </m:mfrac>
+          </m:mrow>
+        </m:math>
+      </equation>
+      <para id="eip-242"><figure id="sigmoidal"><title>Sigmoid Function</title><media id="sigmoid" alt="sigmoid">
+    <image mime-type="image/png" src="../../media/Sigmoid.png"/>
+  </media>
+  
+<caption>Sigmoid function for X in [-10,10]</caption></figure></para><para id="id63088">Why might we want to do this? If we are doing classification between two different items, where one set of examples has the value 0 and one has the value 1, it doesn't make much sense to have values that are outside of this range. With linear regression, the predictions can take on any value. In order to model our hypothesis as being contained within the 0 to 1 range, we can use the sigmoid function. Using the Generalized Linear Model,</para>
+      <equation id="id63095">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:mi>J</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>θ</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:mfrac>
+              <m:mn>1</m:mn>
+              <m:mrow>
+                <m:mn>2</m:mn>
+                <m:mi>m</m:mi>
+              </m:mrow>
+            </m:mfrac>
+            <m:munderover>
+              <m:mo>∑</m:mo>
+              <m:mrow>
+                <m:mi>i</m:mi>
+                <m:mo>=</m:mo>
+                <m:mn>1</m:mn>
+              </m:mrow>
+              <m:mi>m</m:mi>
+            </m:munderover>
+            <m:msup>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:msub>
+                  <m:mi>h</m:mi>
+                  <m:mi>θ</m:mi>
+                </m:msub>
+                <m:mrow>
+                  <m:mo>(</m:mo>
+                  <m:msup>
+                    <m:mi>x</m:mi>
+                    <m:mi>i</m:mi>
+                  </m:msup>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+                <m:mo>-</m:mo>
+                <m:msup>
+                  <m:mi>y</m:mi>
+                  <m:mi>i</m:mi>
+                </m:msup>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:mn>2</m:mn>
+            </m:msup>
+          </m:mrow>
+        </m:math>
+      </equation>
+      <para id="id63181">Recall that in linear regression the hypothesis is</para>
+      <equation id="id63185">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:msub>
+              <m:mi>h</m:mi>
+              <m:mi>θ</m:mi>
+            </m:msub>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>x</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:msup>
+              <m:mi>θ</m:mi>
+              <m:mi>T</m:mi>
+            </m:msup>
+            <m:mi>x</m:mi>
+          </m:mrow>
+        </m:math>
+      </equation>
+      <para id="id63220">In logistic regression, the hypothesis function is</para>
+      <equation id="id63224">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:msub>
+              <m:mi>h</m:mi>
+              <m:mi>θ</m:mi>
+            </m:msub>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>x</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:mi>g</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:msup>
+                <m:mi>θ</m:mi>
+                <m:mi>T</m:mi>
+              </m:msup>
+              <m:mi>x</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:mfrac>
+              <m:mn>1</m:mn>
+              <m:mrow>
+                <m:mn>1</m:mn>
+                <m:mo>+</m:mo>
+                <m:msup>
+                  <m:mi>e</m:mi>
+                  <m:mrow>
+                    <m:mo>-</m:mo>
+                    <m:msup>
+                      <m:mi>θ</m:mi>
+                      <m:mi>T</m:mi>
+                    </m:msup>
+                    <m:mi>x</m:mi>
+                  </m:mrow>
+                </m:msup>
+              </m:mrow>
+            </m:mfrac>
+          </m:mrow>
+        </m:math>
+      </equation><para id="eip-384"><figure id="popup1"><title>Wolfram Demonstrations Logit Function</title><media id="popuppic" alt="popup">
+    <image mime-type="image/png" src="../../media/popup_1.png"/>
+  </media>
+  
+<caption>http://demonstrations.wolfram.com/ComparingBinomialGeneralizedLinearModels/  </caption></figure></para>
+    </section>
+    <section id="id63298">
+      <title>Probabilistic Interpretation</title>
+      <para id="id63304">What we are essentially doing with taking least-squares regression is fitting our data, but we can go about classifying by describing the probability boundary that one of our points is above and below a line, and finding the maximum likelihood estimate of a given theta.</para>
+      <para id="id63310">If we define the Probabilities of being defined as class 1 or 0 as</para>
+      <equation id="id63314">
+        <m:math overflow="scroll" mode="display">
+          <m:mtable displaystyle="true">
+            <m:mtr>
+              <m:mtd columnalign="right">
+                <m:mrow>
+                  <m:mi>P</m:mi>
+                  <m:mo>(</m:mo>
+                  <m:mi>y</m:mi>
+                  <m:mo>=</m:mo>
+                  <m:mn>1</m:mn>
+                  <m:mo>|</m:mo>
+                  <m:mi>θ</m:mi>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+              </m:mtd>
+              <m:mtd>
+                <m:mo>=</m:mo>
+              </m:mtd>
+              <m:mtd columnalign="left">
+                <m:mrow>
+                  <m:msub>
+                    <m:mi>h</m:mi>
+                    <m:mi>θ</m:mi>
+                  </m:msub>
+                  <m:mrow>
+                    <m:mo>(</m:mo>
+                    <m:mi>x</m:mi>
+                    <m:mo>)</m:mo>
+                  </m:mrow>
+                </m:mrow>
+              </m:mtd>
+            </m:mtr>
+            <m:mtr>
+              <m:mtd columnalign="right">
+                <m:mrow>
+                  <m:mi>P</m:mi>
+                  <m:mo>(</m:mo>
+                  <m:mi>y</m:mi>
+                  <m:mo>=</m:mo>
+                  <m:mn>0</m:mn>
+                  <m:mo>|</m:mo>
+                  <m:mi>θ</m:mi>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+              </m:mtd>
+              <m:mtd>
+                <m:mo>=</m:mo>
+              </m:mtd>
+              <m:mtd columnalign="left">
+                <m:mrow>
+                  <m:mn>1</m:mn>
+                  <m:mo>-</m:mo>
+                  <m:msub>
+                    <m:mi>h</m:mi>
+                    <m:mi>θ</m:mi>
+                  </m:msub>
+                  <m:mrow>
+                    <m:mo>(</m:mo>
+                    <m:mi>x</m:mi>
+                    <m:mo>)</m:mo>
+                  </m:mrow>
+                </m:mrow>
+              </m:mtd>
+            </m:mtr>
+          </m:mtable>
+        </m:math>
+      </equation>
+      <para id="id63418">Then it becomes clear that the likelihoods are described as the following:</para>
+      <equation id="id63422">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:mi>L</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>θ</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:munderover>
+              <m:mo>∏</m:mo>
+              <m:mrow>
+                <m:mi>i</m:mi>
+                <m:mo>=</m:mo>
+                <m:mn>1</m:mn>
+              </m:mrow>
+              <m:mi>m</m:mi>
+            </m:munderover>
+            <m:msup>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:msub>
+                  <m:mi>h</m:mi>
+                  <m:mi>θ</m:mi>
+                </m:msub>
+                <m:mrow>
+                  <m:mo>(</m:mo>
+                  <m:msup>
+                    <m:mi>x</m:mi>
+                    <m:mi>i</m:mi>
+                  </m:msup>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:msup>
+                <m:mi>y</m:mi>
+                <m:mi>i</m:mi>
+              </m:msup>
+            </m:msup>
+            <m:msup>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:mn>1</m:mn>
+                <m:mo>-</m:mo>
+                <m:msub>
+                  <m:mi>h</m:mi>
+                  <m:mi>θ</m:mi>
+                </m:msub>
+                <m:mrow>
+                  <m:mo>(</m:mo>
+                  <m:msup>
+                    <m:mi>x</m:mi>
+                    <m:mi>i</m:mi>
+                  </m:msup>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:mrow>
+                <m:mn>1</m:mn>
+                <m:mo>-</m:mo>
+                <m:msup>
+                  <m:mi>y</m:mi>
+                  <m:mi>i</m:mi>
+                </m:msup>
+              </m:mrow>
+            </m:msup>
+          </m:mrow>
+        </m:math>
+      </equation>
+      <para id="id63541">From statistics, it is well-known that taking the log of a maximum likelihood estimate will still achieve the same maximum, and calculating the log-likelihood is significantly easier from a computational standpoint. For a proof of this, see <link document="m11446" version="latest" window="new"> here </link>.</para><para id="id63546">We therefore take the log of the above cost function as a log-likelihood and obtain:</para>
+      <equation id="id63550">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:mi>l</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>θ</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+            <m:mo>=</m:mo>
+            <m:munderover>
+              <m:mo>∑</m:mo>
+              <m:mrow>
+                <m:mi>i</m:mi>
+                <m:mo>=</m:mo>
+                <m:mn>1</m:mn>
+              </m:mrow>
+              <m:mi>m</m:mi>
+            </m:munderover>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:msup>
+                <m:mi>y</m:mi>
+                <m:mi>i</m:mi>
+              </m:msup>
+              <m:mi>l</m:mi>
+              <m:mi>o</m:mi>
+              <m:mi>g</m:mi>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:msub>
+                  <m:mi>h</m:mi>
+                  <m:mi>θ</m:mi>
+                </m:msub>
+                <m:mrow>
+                  <m:mo>(</m:mo>
+                  <m:msup>
+                    <m:mi>x</m:mi>
+                    <m:mi>i</m:mi>
+                  </m:msup>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:mo>+</m:mo>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:mn>1</m:mn>
+                <m:mo>-</m:mo>
+                <m:msup>
+                  <m:mi>y</m:mi>
+                  <m:mi>i</m:mi>
+                </m:msup>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:mi>l</m:mi>
+              <m:mi>o</m:mi>
+              <m:mi>g</m:mi>
+              <m:mrow>
+                <m:mo>(</m:mo>
+                <m:mn>1</m:mn>
+                <m:mo>-</m:mo>
+                <m:msub>
+                  <m:mi>h</m:mi>
+                  <m:mi>θ</m:mi>
+                </m:msub>
+                <m:mrow>
+                  <m:mo>(</m:mo>
+                  <m:msup>
+                    <m:mi>x</m:mi>
+                    <m:mi>i</m:mi>
+                  </m:msup>
+                  <m:mo>)</m:mo>
+                </m:mrow>
+                <m:mo>)</m:mo>
+              </m:mrow>
+              <m:mo>)</m:mo>
+            </m:mrow>
+          </m:mrow>
+        </m:math>
+      </equation>
+    </section>
+    <section id="id63688">
+      <title>Minimizing the Cost Function</title>
+      <para id="id63694">Now that we understand how we would classify these datasets exactly, how do we minimize the cost function? One simple way involves the application of Gradient Descent.</para>
+      <para id="id63699">Gradient Descent is a method of approximating a cost function that gets you to converge to a final correct value. This is described for our cost function above as</para>
+      <equation id="id63704">
+        <m:math overflow="scroll" mode="display">
+          <m:mrow>
+            <m:msub>
+              <m:mi>θ</m:mi>
+              <m:mi>j</m:mi>
+            </m:msub>
+            <m:mo>=</m:mo>
+            <m:msub>
+              <m:mi>θ</m:mi>
+              <m:mi>j</m:mi>
+            </m:msub>
+            <m:mo>-</m:mo>
+            <m:mi>α</m:mi>
+            <m:mfrac>
+              <m:mi>∂</m:mi>
+              <m:mrow>
+                <m:mi>∂</m:mi>
+                <m:msub>
+                  <m:mi>θ</m:mi>
+                  <m:mi>j</m:mi>
+                </m:msub>
+              </m:mrow>
+            </m:mfrac>
+            <m:mi>J</m:mi>
+            <m:mrow>
+              <m:mo>(</m:mo>
+              <m:mi>θ</m:mi>
+              <m:mo>)</m:mo>
+            </m:mrow>
+          </m:mrow>
+        </m:math>
+      </equation>
+      <para id="id63758">That is, for every example, we update the theta value by subtracting (subject to some learning rate parameter <m:math overflow="scroll"><m:mi>α</m:mi></m:math>) the partial derivative of the cost function in terms of that example, and repeat until convergence.</para>
+      <para id="id63771">If we plot the output of a gradient descent function, it will start at a random point on the contour plot, and then after every iteration, it will move closer to the optimal value.</para><para id="eip-269"><figure id="gradientdescent"><title>Gradient Descent</title><media id="graddescent" alt="grad">
+    <image mime-type="image/png" src="../../media/gradient.png"/>
+  </media>
+  
+<caption>Gradient Descent plot showing the trend towards the optimum value</caption></figure></para>
+    </section>
+    <section id="id63777">
+      <title>Applying Logistic Regression</title>
+      <para id="id63784">In this section, we apply logistic regression described in earlier section to a simulated data set and study how well it performs.</para>
+      <section id="id63788"><title>Data Generation</title><para id="id63794">We simulated the case where each training example is described by two features <m:math overflow="scroll"><m:msub><m:mi>x</m:mi><m:mn>1</m:mn></m:msub></m:math> and <m:math overflow="scroll"><m:msub><m:mi>x</m:mi><m:mn>2</m:mn></m:msub></m:math>. The two features <m:math overflow="scroll"><m:msub><m:mi>x</m:mi><m:mn>1</m:mn></m:msub></m:math> and <m:math overflow="scroll"><m:msub><m:mi>x</m:mi><m:mn>2</m:mn></m:msub></m:math> are generated uniformly in the range <m:math overflow="scroll"><m:mrow><m:mo>[</m:mo><m:mn>0</m:mn><m:mo>,</m:mo><m:mn>10</m:mn><m:mo>]</m:mo></m:mrow></m:math>. The size of the training data set is 1000. The training examples were split into 2 classes, class 0 or class 1 based on the polynomial:</para><equation id="uid2"><m:math overflow="scroll">
+            <m:mrow>
+              <m:msup>
+                <m:mfenced separators="" open="(" close=")">
+                  <m:msub>
+                    <m:mi>x</m:mi>
+                    <m:mn>1</m:mn>
+                  </m:msub>
+                  <m:mo>-</m:mo>
+                  <m:mn>5</m:mn>
+                </m:mfenced>
+                <m:mn>4</m:mn>
+              </m:msup>
+              <m:mo>-</m:mo>
+              <m:msubsup>
+                <m:mi>x</m:mi>
+                <m:mn>2</m:mn>
+                <m:mn>3</m:mn>
+              </m:msubsup>
+              <m:mo>+</m:mo>
+              <m:mn>6</m:mn>
+              <m:mo>=</m:mo>
+              <m:mn>0</m:mn>
+            </m:mrow>
+          </m:math>
+        </equation><para id="id63928">All the training examples that are above the polynomial eq. <link target-id="uid2"/> belong to class 1 and the training examples below the polynomial curve belong to class 0. Notice that the true boundary that separates the two classes is a 4<sup>th</sup> order polynomial.</para>
+        <para id="id63945">The figure below plots the training data and the actual decision boundary.</para>
+        <para id="eip-801"><figure id="scatterplot"><media id="scatter" alt="scatter">
+    <image mime-type="image/png" src="../../media/fig1.png"/>
+  </media>
+  
+<caption>Scatter Plot of Training Data</caption></figure></para><para id="id63949">We split the training data set into 3 separate sets, training set with 600 examples, cross-validation set with 200 examples and test data set with 200 examples. </para>
+      </section><section id="eip-876"><title>Classification</title><para id="eip-484">
+This training data was then fed into a logistic regression classifier to study the performance of the classifier. It is important to note that the objective of logistic regression classifier is maximizing the accuracy of labeling the data into two classes. Unlike linear regression, the decision boundary of the logistic regression classifier does not try to match the underlying true boundary which divides the data into two classes.</para>
+        <para id="id63958">In addition to the two features that identify a training example, polynomial features up to a desired degree are generated. We start off the optimization with an initial parameter value of all 0. The optimization of the cost function is done using the Matlab's built-in <emphasis effect="italics">fminunc</emphasis> function. A function <emphasis effect="italics">costFunctionReg.m</emphasis> that outputs the regularized cost and regularized gradient, with the training data, parameter values and the regularization parameter as inputs, is given as input along with initial parameter values to this <emphasis effect="italics">fminunc</emphasis> function.</para>
+        <para id="id63981">Now we vary the maximum degree of the polynomial features to study the decision boundary of the classifier. Its important to note that the values of the parameters are obtained from the training data set, for a given value of maximum degree. The optimal values of maximum degree are determined by the performance on the cross-validation set. Finally, the decision boundary obtained by solving for the parameters with optimal values of maximum degree is used to evaluate the performance on a test data set, in order to see how well the classifier generalizes.</para>
+        <para id="id63990">The decision boundary for a degree 1 polynomial is shown in <link target-id="regression"/> below. The accuracy on the cross-validation set was <m:math overflow="scroll"><m:mrow><m:mn>84</m:mn><m:mo>.</m:mo><m:mn>50</m:mn></m:mrow></m:math>.</para><para id="eip-522"><figure id="regression"><media id="regress" alt="regress">
+    <image mime-type="image/png" src="../../media/fig2.png"/>
+  </media>
+  
+<caption>Logistic Regression with 1st degree features</caption></figure></para><para id="id64010">From <link target-id="regression"/> it is clear that 1<sup>st</sup> degree features are not sufficient to capture both classes. So the maximum degree was increased to 2. <link target-id="regression2"/> plots the decision boundary for degree 2. The accuracy of the classifier on cross-validation set in this case was <m:math overflow="scroll"><m:mrow><m:mn>98</m:mn><m:mo>.</m:mo><m:mn>50</m:mn></m:mrow></m:math>.</para><para id="eip-700"><figure id="regression2"><media id="regress2" alt="regress2">
+    <image mime-type="image/png" src="../../media/fig3.png"/>
+  </media>
+  
+<caption>Logistic Regression with 2nd degree features</caption></figure></para><para id="eip-693">We now try the maximum degree of 3. <link target-id="regression3"/> plots the decision boundary with maximum degree 3. The accuracy on cross-validation set is 98.00.</para><para id="eip-644"><figure id="regression3"><media id="regress3" alt="regress3">
+    <image mime-type="image/png" src="../../media/fig4.png"/>
+  </media>
+  
+<caption>Logistic Regression with 3rd degree features</caption></figure></para><para id="eip-738">Due to its lower accuracy, the logistic regression classifier with maximum degree 2 is chosen from amongst the 3 classifiers. This classifier was then evaluated on test data set to study how well it generalizes. The accuracy of this classifier on test set was 98.00. Hence this logistic regression classifier generalizes very well.</para><para id="eip-604">To see the MATLAB code that generated these plots, download the following .zip file:
+
+<link resource="MATLAB_Graph_Generators.zip">MATLAB files for simulated data.</link> !</para></section>
+    </section>
+    <section id="id64041"><title>Conclusion</title><para id="id64047">As was stated, this collection is intended to be an introduction to regression analysis, but is sufficient in order to understand the application of logistic regression to an application. There are plenty of resources to learn more about more nuanced views of the key components of the theory, and more resources to see logistic regression in action!</para>
+      
+      <para id="id64061">For an application of Logistic Regression to a synthetic dataset and to a real-world problem in statistical physics, see <link document="m42088" class="cnxn">Optimizing Logistic Regression for Particle Physics</link> !</para></section>
+  </content>
+</document>
