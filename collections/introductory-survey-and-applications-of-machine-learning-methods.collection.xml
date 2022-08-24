@@ -1,12 +1,13 @@
-<col:collection xmlns="http://cnx.rice.edu/collxml" xmlns:col="http://cnx.rice.edu/collxml" xml:lang="en">
+<?xml version="1.0"?>
+<col:collection xmlns="http://cnx.rice.edu/collxml" xmlns:col="http://cnx.rice.edu/collxml" xml:lang="en" authors="Dan Calderon">
   <metadata xmlns:md="http://cnx.rice.edu/mdml" mdml-version="0.5">
     <md:content-id>col11400</md:content-id>
     <md:title>Introductory Survey and Applications of Machine Learning Methods</md:title>
     <md:language>en</md:language>
     <md:license url="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution License</md:license>
     <md:uuid>4f83d292-1630-4284-a6c4-f2db883b9e9b</md:uuid>
-<md:slug>introductory-survey-and-applications-of-machine-learning-methods</md:slug>
-</metadata>
+    <md:slug>introductory-survey-and-applications-of-machine-learning-methods</md:slug>
+  </metadata>
   <col:content>
     <col:module document="m42090"/>
     <col:module document="m42088"/>
